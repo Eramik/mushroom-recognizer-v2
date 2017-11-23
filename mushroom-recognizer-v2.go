@@ -1,19 +1,41 @@
 package main
 
-import (
-	"database/sql"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"regexp"
+//import "database/sql"
+//import "encoding/json"
+//import "errors"
+//import "fmt"
+//import "io"
+//import "net/http"
+//import "os"
+//import "regexp"
 
-	_ "github.com/go-sql-driver/mysql"
-)
+//import "github.com/rs/xid"
+
+//import "github.com/go-sql-driver/mysql"
+
+type Configuration struct {
+	MySQLUser     string
+	MySQLDatabase string
+	MySQLPassword string
+}
+
+const CONFIGURATION_PATH = "recognizer20conf.json"
+const PORT = ":9090"
+
+var configuration = Configuration{}
+
+func loadConfiguration() error {
+	file, _ := os.Open(CONFIGURATION_PATH)
+	decoder := json.NewDecoder(file)
+	err := decoder.Decode(&configuration)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // Closes request with error if any errors occured
-func anyErrors(error e, w http.ResponseWriter) bool {
+func anyErrors(e error, w http.ResponseWriter) bool {
 	if e != nil {
 		http.Error(w, e.Error(), http.StatusInternalServerError)
 		return true
@@ -25,7 +47,8 @@ func anyErrors(error e, w http.ResponseWriter) bool {
 // Generates random filename with length 32 with provided extension
 // Takes salt from cfg file, takes integer seed as last insert in database
 func generateFileName(fileExtension string) string {
-
+	filename := xid.New().String()
+	return filename + fileExtension
 }
 
 // Saves file and returs its url and error
@@ -35,7 +58,7 @@ func receiveFile(r *http.Request) (string, error) {
 	// the FormFile function takes in the POST input id file
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		return _, err
+		return "", err
 	}
 
 	defer file.Close()
@@ -44,27 +67,29 @@ func receiveFile(r *http.Request) (string, error) {
 
 	dir, err := os.Getwd() // Get current dir
 	if err != nil {
-		return _, err
+		return "", err
 	}
 
-	fileExtensionRegexp := regexp.MustCompile("(.jpg)|(.png)")
+	fileExtensionRegexp := regexp.MustCompile("(.jpg$)|(.png$)")
 	fileExtension := fileExtensionRegexp.FindString(header.Filename)
 
 	if fileExtension == "" {
-		return _, errors.New("File extension must be .jpg or .png only")
+		return "", errors.New("File extension must be .jpg or .png only")
 	}
+
+	filename := generateFileName(fileExtension)
 
 	path := dir + "\\imgs\\" + filename
 	out, err := os.Create(path)
 	if err != nil {
-		return _, err
+		return "", err
 	}
 
 	defer out.Close()
 	// write the content from POST to the file
 	_, err = io.Copy(out, file)
 	if err != nil {
-		return _, err
+		return "", err
 	}
 
 	return path, nil
@@ -72,10 +97,25 @@ func receiveFile(r *http.Request) (string, error) {
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	if r.Method == "OPTIONS" {
+		return
+	}
 
+	path, err := receiveFile(r)
+	if anyErrors(err, w) {
+		return
+	}
+
+	w.Write([]byte(path))
 }
 
 func main() {
-	http.HandleFunc("/", uploadHandler)
-	http.ListenAndServe(":8080", nil)
+	err := loadConfiguration()
+	if err != nil {
+		fmt.Println("Error while loading configuration: ", err)
+		return
+	}
+	http.HandleFunc("/receive", uploadHandler)
+	http.ListenAndServe(PORT, nil)
 }
