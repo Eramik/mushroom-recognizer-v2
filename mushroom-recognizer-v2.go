@@ -1,15 +1,15 @@
 package main
 
 //import "database/sql"
-//import "encoding/json"
-//import "errors"
-//import "fmt"
-//import "io"
-//import "net/http"
-//import "os"
-//import "regexp"
+import "encoding/json"
+import "errors"
+import "fmt"
+import "io"
+import "net/http"
+import "os"
+import "regexp"
 
-//import "github.com/rs/xid"
+import "github.com/rs/xid"
 
 //import "github.com/go-sql-driver/mysql"
 
@@ -20,6 +20,10 @@ type Configuration struct {
 }
 
 const CONFIGURATION_PATH = "recognizer20conf.json"
+const IMGS_STORAGE_DIR = "/www/dgodovanets.shpp.me/recognizer-v2/imgs/"
+
+// http:// will be added automatically
+const REGEXP_IMG_URL = "dgodovanets.shpp.me/.$"
 const PORT = ":9090"
 
 var configuration = Configuration{}
@@ -79,7 +83,7 @@ func receiveFile(r *http.Request) (string, error) {
 
 	filename := generateFileName(fileExtension)
 
-	path := dir + "\\imgs\\" + filename
+	path := dir + IMGS_STORAGE_DIR + filename
 	out, err := os.Create(path)
 	if err != nil {
 		return "", err
@@ -92,7 +96,12 @@ func receiveFile(r *http.Request) (string, error) {
 		return "", err
 	}
 
-	return path, nil
+	// Generate url from path
+	urlRegexp := regexp.MustCompile(REGEXP_IMG_URL)
+	url := urlRegexp.FindString(path)
+	url = "http://" + url
+
+	return url, nil
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -118,4 +127,5 @@ func main() {
 	}
 	http.HandleFunc("/receive", uploadHandler)
 	http.ListenAndServe(PORT, nil)
+	fmt.Println("Running on port ", PORT)
 }
