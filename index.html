@@ -5,12 +5,35 @@
 <head>
     <meta charset="utf-8" />
     <title>Recognizer V2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" href="http://dgodovanets.shpp.me/recognizer/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="index.css">
     <link href="http://hayageek.github.io/jQuery-Upload-File/4.0.11/uploadfile.css" rel="stylesheet">
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="http://hayageek.github.io/jQuery-Upload-File/4.0.11/jquery.uploadfile.min.js"></script>
+
 </head>
 <body>
-    <div id="fileuploader">Upload</div>
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <p id="errorText"></p>
+        </div>
+    </div>
+    <div id="bodyWrapper">
+        <div id="uploader">
+            <p class="txt">Перетягніть фото або натисніть "Завантажити" щоб розпізнати гриб:</p>
+            <div id="fileuploader"></div>
+        </div>
+        <div id="result">
+            <p id="openedHeader" class="txt">Найбільш вірогідний вид:</p>
+            <img id="openedIMG" src="" />
+            <center><p id="openedTitle" class="txt"></p></center>
+            <div id="imgsContainer">
+
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 <script>
@@ -23,25 +46,36 @@
             acceptFiles: "image/*",
             multiple: false,
             maxFileCount: 1,
-            maxFileSize: 1024 * 100 * 5, // in bytes
+            maxFileSize: 1024 * 100 * 5, // in bytes. Setted to 5 mb
             allowedTypes: "jpg,png",
-            onSuccess: function () {
-                //alert("Upload done");
+            dragDropStr: "Перетягніть сюди фото",
+            uploadStr: "Завантажити",
+            abortStr: "Зупинити",
+            cancelStr: "Закрити",
+            doneStr: "Завершено",
+            multiDragErrorStr: "Не можна перетягувани більше одного фото",
+            extErrorStr: "завантажити не можна. Дозволені розширення: ",
+            sizeErrorStr: "завантажити не можна. Максимальний розмір файлу: ",
+            maxFileCountErrorStr: " не можна. Максимум файлів дозволено:",
+            dragdropWidth:"auto",
+            onSuccess: function (files, data) {
+                if (data.success != true) {
+                    $("#errorText").text(data.error);
+                    $("#errorModal").show();
+                    $("#fileuploader").cancelAll();
+                }
             }
         });
+
+        $("#closeModal").on("click", function () {
+            $("#errorModal").hide();
+        });
+
+        var modal = document.getElementById('errorModal');
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
     });
 </script>
-<!--
-<html>
-<title>Go upload</title>
-<body>
-
-    <form action="http://localhost:8080/receive" method="post" enctype="multipart/form-data">
-        <label for="file">Filename:</label>
-        <input type="file" name="file" id="file">
-        <input type="submit" name="submit" value="Submit">
-    </form>
-
-</body>
-</html>
--->

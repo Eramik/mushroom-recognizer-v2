@@ -8,6 +8,8 @@ import "io"
 import "net/http"
 import "os"
 import "regexp"
+import "bytes"
+import "io/ioutil"
 
 import "github.com/rs/xid"
 
@@ -17,13 +19,15 @@ type Configuration struct {
 	MySQLUser     string
 	MySQLDatabase string
 	MySQLPassword string
+	PredictionURL string
+	PredictionKey string
 }
 
 const CONFIGURATION_PATH = "recognizer20conf.json"
 const IMGS_STORAGE_DIR = "/www/dgodovanets.shpp.me/recognizer-v2/imgs/"
 
 // http:// will be added automatically
-const REGEXP_IMG_URL = "dgodovanets.shpp.me/.$"
+const REGEXP_IMG_URL = "dgodovanets.shpp.me/.+$"
 const PORT = ":9090"
 
 var configuration = Configuration{}
@@ -99,24 +103,58 @@ func receiveFile(r *http.Request) (string, error) {
 	// Generate url from path
 	urlRegexp := regexp.MustCompile(REGEXP_IMG_URL)
 	url := urlRegexp.FindString(path)
+	if url == "" {
+		return "", errors.New("Can't generate url from path of file")
+	}
+
 	url = "http://" + url
 
 	return url, nil
 }
 
-func uploadHandler(w http.ResponseWriter, r *http.Request) {
+func getPrediction(fileUrl string) (string, error) {
+	client := &http.Client{}
+	var jsonStr = []byte(`{"Url": "` + fileUrl + `"}`)
+	req, err := http.NewRequest("POST", configuration.PredictionURL, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Add("Prediction-Key", configuration.PredictionKey)
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	respData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	respString := string(respData)
+
+	return respString, nil
+}
+
+func controller(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	if r.Method == "OPTIONS" {
 		return
 	}
 
-	path, err := receiveFile(r)
+	fileUrl, err := receiveFile(r)
+	if anyErrors(err, w) {
+		return
+	}
+	w.Write([]byte(fileUrl))
+	resp, err := getPrediction(fileUrl)
 	if anyErrors(err, w) {
 		return
 	}
 
-	w.Write([]byte(path))
+	w.Write([]byte(resp))
 }
 
 func main() {
@@ -125,7 +163,7 @@ func main() {
 		fmt.Println("Error while loading configuration: ", err)
 		return
 	}
-	http.HandleFunc("/receive", uploadHandler)
+	http.HandleFunc("/receive", controller)
 	http.ListenAndServe(PORT, nil)
 	fmt.Println("Running on port ", PORT)
 }
