@@ -154,7 +154,7 @@ func controller(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(resp))
+	w.Write([]byte("{ \"success\": true, \"data\": " + resp + " }"))
 }
 
 func main() {

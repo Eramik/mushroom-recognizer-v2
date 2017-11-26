@@ -27,7 +27,7 @@
         </div>
         <div id="result">
             <p id="openedHeader" class="txt">Найбільш вірогідний вид:</p>
-            <img id="openedIMG" src="" />
+            <img id="openedIMG" width="100%" src="" />
             <center><p id="openedTitle" class="txt"></p></center>
             <div id="imgsContainer">
 
@@ -37,16 +37,18 @@
 </body>
 </html>
 <script>
-    const FILE_HANDLER_URL = "http://dgodovanets.shpp.me:9090/receive"
+    var upload;
+    const FILE_HANDLER_URL = "http://dgodovanets.shpp.me:9090/receive";
+    const EXAMPLE_IMG_URL_SEED = "http://dgodovanets.shpp.me/recognizer-v2/examples/";
     $(document).ready(function () {
-        $("#fileuploader").uploadFile({
+        upload = $("#fileuploader").uploadFile({
             url: FILE_HANDLER_URL,
             fileName: "file",
             dragDrop: true,
             acceptFiles: "image/*",
             multiple: false,
             maxFileCount: 1,
-            maxFileSize: 1024 * 100 * 5, // in bytes. Setted to 5 mb
+            maxFileSize: 1024 * 1000 * 5, // in bytes. Setted to 5 mb
             allowedTypes: "jpg,png",
             dragDropStr: "Перетягніть сюди фото",
             uploadStr: "Завантажити",
@@ -59,11 +61,18 @@
             maxFileCountErrorStr: " не можна. Максимум файлів дозволено:",
             dragdropWidth:"auto",
             onSuccess: function (files, data) {
+                rawData = data;
+                data = JSON.parse(data);
                 if (data.success != true) {
-                    $("#errorText").text(data.error);
-                    $("#errorModal").show();
-                    $("#fileuploader").cancelAll();
+                    showNotification(rawData);
+                    return;
                 }
+                upload.reset();
+                showNotification(data.data.Predictions[0].Tag);
+                $("#uploader").hide();
+                $("#openedTitle").text(data.data.Predictions[0].Tag);
+                $("#openedIMG").attr("src", EXAMPLE_IMG_URL_SEED + data.data.Predictions[0].TagId + "/main.jpg");
+                $("#result").show();
             }
         });
 
@@ -78,4 +87,9 @@
             }
         }
     });
+
+    function showNotification(notificationText) {
+        $("#errorText").text(notificationText);
+        $("#errorModal").show();
+    }
 </script>
