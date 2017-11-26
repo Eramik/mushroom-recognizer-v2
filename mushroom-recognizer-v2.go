@@ -148,7 +148,7 @@ func controller(w http.ResponseWriter, r *http.Request) {
 	if anyErrors(err, w) {
 		return
 	}
-	w.Write([]byte(fileUrl))
+
 	resp, err := getPrediction(fileUrl)
 	if anyErrors(err, w) {
 		return
