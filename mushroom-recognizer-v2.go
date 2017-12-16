@@ -78,7 +78,7 @@ func receiveFile(r *http.Request) (string, error) {
 		return "", err
 	}
 
-	fileExtensionRegexp := regexp.MustCompile("(.jpg$)|(.png$)")
+    fileExtensionRegexp := regexp.MustCompile("(.jpg$)|(.jpeg&)|(.png$)")
 	fileExtension := fileExtensionRegexp.FindString(header.Filename)
 
 	if fileExtension == "" {
