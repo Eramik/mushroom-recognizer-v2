@@ -32,6 +32,7 @@
             <div id="imgsContainer">
 
             </div>
+            <a id="info">Переглянути інформацію про вид</a>
         </div>
     </div>
 </body>
@@ -61,17 +62,17 @@
             maxFileCountErrorStr: " не можна. Максимум файлів дозволено:",
             dragdropWidth:"auto",
             onSuccess: function (files, data) {
-                rawData = data;
                 data = JSON.parse(data);
                 if (data.success != true) {
                     showNotification(rawData);
                     return;
                 }
+                data = data.data;
                 upload.reset();
-                showNotification(data.data.Predictions[0].Tag);
                 $("#uploader").hide();
-                $("#openedTitle").text(data.data.Predictions[0].Tag);
-                $("#openedIMG").attr("src", EXAMPLE_IMG_URL_SEED + data.data.Predictions[0].TagId + "/main.jpg");
+                $("#openedTitle").text(data.Predictions[0].Tag);
+                $("#openedIMG").attr("src", EXAMPLE_IMG_URL_SEED + data.Predictions[0].TagId + "/main.jpg");
+                $("#info").attr("href", "http://dgodovanets.shpp.me/recognizer/catalogue/index.html?tagid=" + data.Predictions[0].TagId);
                 $("#result").show();
             }
         });
