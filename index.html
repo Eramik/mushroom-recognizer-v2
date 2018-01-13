@@ -70,7 +70,7 @@
                 data = data.data;
                 upload.reset();
                 $("#uploader").hide();
-                $("#openedTitle").text(data.Predictions[0].Tag);
+                $("#openedTitle").text(getTitle(data.Predictions[0].TagId));
                 $("#openedIMG").attr("src", EXAMPLE_IMG_URL_SEED + data.Predictions[0].TagId + "/main.jpg");
                 $("#info").attr("href", "http://dgodovanets.shpp.me/recognizer/catalogue/index.html?tagid=" + data.Predictions[0].TagId);
                 $("#result").show();
@@ -88,6 +88,18 @@
             }
         }
     });
+
+    function getTitle(TagId) {
+        switch(TagId) {
+            case "e2f116a0-dfd5-489c-9fee-a2e28fdcdd6f": return "Червоний мухомор";
+            case "2f4c1ea6-e2d0-405d-9ae8-caf28614d0f9": return "Білий гриб";
+            case "008d234f-b77a-4c26-8497-44f87ad3ad94": return "Підберезовик звичайний";
+            case "2310431b-4991-445f-bfc7-47debdca4087": return "Груздь";
+            case "ad0b8015-b99c-43e0-a103-0550d51bb9ed": return "Рижик";
+            case "zzz": return "Лисичка";
+            default: throw "Wrong TagId";
+        }
+    }
 
     function showNotification(notificationText) {
         $("#errorText").text(notificationText);
