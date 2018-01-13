@@ -78,11 +78,11 @@ func receiveFile(r *http.Request) (string, error) {
 		return "", err
 	}
 
-    fileExtensionRegexp := regexp.MustCompile("(.jpg$)|(.jpeg&)|(.png$)")
+    fileExtensionRegexp := regexp.MustCompile("(.jpg$)|(.jpeg$)|(.png$)")
 	fileExtension := fileExtensionRegexp.FindString(header.Filename)
 
 	if fileExtension == "" {
-		return "", errors.New("File extension must be .jpg or .png only")
+		return "", errors.New("File extension must be .jpg, .jpeg or .png only")
 	}
 
 	filename := generateFileName(fileExtension)
