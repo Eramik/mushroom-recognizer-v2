@@ -14,6 +14,28 @@
 
 }
 
+#recognize_another {
+    color: white;
+    background: rgb(47, 138, 185);
+    font-weight: bold;
+    padding: 10px;
+    border: 1px white solid;
+    font-size: 100%;
+    border-radius: 3px;
+    margin-top: 5px;
+}
+
+#recognize_another:hover {
+    color: white;
+    background: rgb(42, 122, 162);
+    font-weight: bold;
+    padding: 10px;
+    border: 1px white solid;
+    font-size: 100%;
+    border-radius: 3px;
+    margin-top: 5px;
+}
+
 #uploader {
     width: 100%;
 }
